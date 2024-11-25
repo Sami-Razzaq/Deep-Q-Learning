@@ -1,8 +1,6 @@
 from collections import defaultdict
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 import numpy as np
-import seaborn as sns
 from tqdm import tqdm      # Progress bar
 import gymnasium as gym
 from gym.wrappers import RecordEpisodeStatistics
@@ -14,7 +12,7 @@ env = gym.make('Blackjack-v1', sab=True, render_mode="rgb_array")
 np.bool8 = np.bool_
 
 learning_rate = 0.01
-n_episodes = 10000
+n_episodes = 30000
 start_epsilon = 1.0
 epsilon_decay = start_epsilon / (n_episodes/2)     # reduce exploration over time
 final_epsilon = 0.1
@@ -72,12 +70,15 @@ agent = BlackJackAgent(
    final_epsilon=final_epsilon
 )
 
+# Create environment to get the game statistics as agent trains
 env = RecordEpisodeStatistics(env, deque_size=n_episodes)
 
+# start training
 for episode in tqdm(range(n_episodes)):
    obs, info = env.reset()
    done = False
    
+   # Do Action, review rewards and update next action/epsilon value
    while not done:
       action = agent.get_action(obs)
       next_obs, reward, terminated, truncated, info = env.step(action)
@@ -86,6 +87,7 @@ for episode in tqdm(range(n_episodes)):
       frame = env.render()
       
       
+      # Show current game frame
       # plt.imshow(frame)
       # plt.show()
       # set_trace()
@@ -110,5 +112,5 @@ ax[2].set_title("Training Error")
 training_error_moving_average = (np.convolve(np.array(agent.training_error).flatten(), np.ones(roling_length), mode='same')/roling_length)
 ax[2].plot(range(len(training_error_moving_average)), training_error_moving_average)
 
-plt.tight_layout()
 plt.show()
+fig.savefig(fname="Simple Q-Learning Metrics.jpg")
