@@ -20,8 +20,12 @@ class DeepQNetwork(object):
       self.checkpoint_file = os.path.join(chkpt_dir, 'deepqnet.ckpt')
       self.params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
                                       scope=self.name)
-      
+   
+   # Model Building
    def build_net(self):
+      """ Takes images as input, passes it through the Q-Network, 
+            get features, determines action. 
+      """
       with tf.variable_scope(self.name):
          self.input = tf.placeholder(tf.float32, shape=[None, *self.input_dims], 
                                      name='inputs')
@@ -29,6 +33,7 @@ class DeepQNetwork(object):
                                      name='action_taken')
          self.q_target = tf.placeholder(tf.float32, shape=[None, self.n_actions])
          
+         # Layers
          conv1 = tf.layers.conv2d(inputs=self.input, filters=32, kernel_size=(8,8),
                                   strides=4, name='conv1',
                                   kernel_initializer=tf.variance_scaling_initializer(scale=2))
@@ -49,3 +54,17 @@ class DeepQNetwork(object):
          self.Q_values = tf.layers.dense(dense1, units=self.n_actions,
                                          kernel_initializer=tf.variance_scaling_initializer(scale=2))
          
+         self.q = tf.reduce_sum(tf.multiply(self.Q_values, self.actions))
+         self.loss = tf.reduce_mean(tf.square(self.q - self.q_target))
+         
+         self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
+         
+   # Load Checkpoint File
+   def load_checkpoint(self):
+      print('...loading checkpoint...')
+      self.saver.restore(self.sess, self.checkpoint_file)
+   
+   # Save Checkpoint File
+   def save_checkpoint(self):
+      print('...saving checkpoint...')
+      self.saver.save(self.sess, self.checkpoint_file)
