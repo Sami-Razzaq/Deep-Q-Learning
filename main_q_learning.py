@@ -14,7 +14,7 @@ env = gym.make('Blackjack-v1', sab=True, render_mode="rgb_array")
 np.bool8 = np.bool_
 
 learning_rate = 0.01
-n_episodes = 100000
+n_episodes = 10000
 start_epsilon = 1.0
 epsilon_decay = start_epsilon / (n_episodes/2)     # reduce exploration over time
 final_epsilon = 0.1
@@ -94,3 +94,21 @@ for episode in tqdm(range(n_episodes)):
       obs = next_obs
    
    agent.decay_epsilon()
+   
+roling_length = 500
+fig, ax = plt.subplots(ncols=3)
+
+ax[0].set_title("Episode Rewards")
+reward_moving_average = (np.convolve(np.array(env.return_queue).flatten(), np.ones(roling_length), mode='valid')/roling_length)
+ax[0].plot(range(len(reward_moving_average)), reward_moving_average)
+
+ax[1].set_title("Episode Lengths")
+length_moving_average = (np.convolve(np.array(env.length_queue).flatten(), np.ones(roling_length), mode='same')/roling_length)
+ax[1].plot(range(len(length_moving_average)), length_moving_average)
+
+ax[2].set_title("Training Error")
+training_error_moving_average = (np.convolve(np.array(agent.training_error).flatten(), np.ones(roling_length), mode='same')/roling_length)
+ax[2].plot(range(len(training_error_moving_average)), training_error_moving_average)
+
+plt.tight_layout()
+plt.show()
