@@ -2,8 +2,6 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from pdb import set_trace
-
 # Building Q-Network
 class DeepQNetwork(object):
    def __init__(self, lr, n_actions, name, fc1_dims=256,
@@ -126,6 +124,7 @@ class Agent(object):
       batch = np.random.choice(max_mem, self.batch_size)
       
       state_batch = self.state_memory[batch]
+      new_state_batch = self.new_state_memory[batch]
       action_batch = self.action_memory[batch]
       reward_batch = self.reward_memory[batch]
       terminal_batch = self.terminal_memory[batch]
