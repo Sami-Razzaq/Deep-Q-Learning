@@ -56,12 +56,67 @@ class DQN(nn.Module):
       x = F.relu(self.layer2(x))
       return self.layer3(x)
 
-# parameters
+# hyper-parameters
 
 batch_size = 128
-gamma = 0.99
-eps_start = 0.9
-eps_end = 0.05
-eps_decay = 1000
-tau = 0.005
+gamma = 0.99         # discount factor
+eps_start = 0.9      # Epsilon Starting Value
+eps_end = 0.05       # Epsilon Ending Value
+eps_decay = 1000     # Epsilon Decay (higher is slower)
+tau = 0.005          # update rate of target network
 lr = 1e-4
+
+# Actions & States of environment 
+n_actions = env.action_space.n
+state, info = env.reset()
+n_observations = len(state)         # No. of features in state
+policy_net = DQN(n_observations, n_actions).to(device)
+target_net = DQN(n_observations, n_actions).to(device)
+target_net.load_state_dict(policy_net.state_dict())
+
+optimizer = optim.AdamW(policy_net.parameters(), lr=lr, amsgrad=True)
+
+# Stores agent's experiences for training
+memory = ReplayMemory(10000)
+
+# No. of steps taken by agent
+steps_done = 0
+
+def select_action(state):
+   """input - Current State
+      returns - actions with highest value or random
+   """
+   global steps_done
+   sample = random.random()
+   eps_threshold = eps_end + (eps_start - eps_end) * math.exp(-1. * steps_done / eps_decay)
+
+   steps_done += 1
+   if sample > eps_threshold:
+      with torch.no_grad():
+         return policy_net(state).max(1)[1].view(1,1)
+   else:
+      return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
+
+# durat
+episode_durations = []
+
+def plot_duration(show_result=False):
+   plt.figure(1)
+   duration_t = torch.tensor(episode_durations, dtype=torch.float)
+   
+   if show_result:
+      plt.title("Result")
+   else:
+      plt.clf()
+      plt.title("Training")
+   plt.xlabel("Episode")
+   plt.ylabel("Duration")
+   plt.plot(duration_t.numpy())
+   
+   if len(duration_t) >= 100:
+      means = duration_t.unfold(0, 1000, 1).mean(1).view(-1)
+      means = torch.cat((torch.zero(99), means))
+      
+      plt.plot(means.numpy)
+   
+   plt.pause(0.001)
