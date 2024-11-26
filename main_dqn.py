@@ -36,3 +36,32 @@ class ReplayMemory(object):
    def __len__(self):
       """Returns length of buffer"""
       return len(self.memory)
+   
+class DQN(nn.Module):
+   """Multilayer Perceptron of 3-Layers
+      n_observations is the environment state
+      n_actions is the actions in response to the
+      environment state
+   """
+   
+   def __init__(self, n_observations, n_actions):
+      super(DQN, self).__init__()
+      
+      self.layer1 = nn.Linear(n_observations, 128)
+      self.layer2 = nn.Linear(128, 128)
+      self.layer3 = nn.Linear(128, n_actions)
+      
+   def forward(self, x):
+      x = F.relu(self.layer1(x))
+      x = F.relu(self.layer2(x))
+      return self.layer3(x)
+
+# parameters
+
+batch_size = 128
+gamma = 0.99
+eps_start = 0.9
+eps_end = 0.05
+eps_decay = 1000
+tau = 0.005
+lr = 1e-4
