@@ -14,11 +14,13 @@ import torch.nn.functional as F
 
 from pdb import set_trace
 
+np.bool8 = np.bool_
+
 env = gym.make('CartPole-v1')
 
 device = torch.device("cuda" if torch.cuda.is_available() else ("cpu"))
 
-Transition = namedtuple('Transition', 'state', 'action', 'next_state', 'reward')
+Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
 class ReplayMemory(object):
    
@@ -101,23 +103,26 @@ def select_action(state):
 episode_durations = []
 
 def plot_duration(show_result=False):
-   plt.figure(1)
+   f1 = plt.figure(1)
    duration_t = torch.tensor(episode_durations, dtype=torch.float)
    
    if show_result:
       plt.title("Result")
    else:
-      plt.clf()
+      f1.clf()
       plt.title("Training")
    plt.xlabel("Episode")
    plt.ylabel("Duration")
+   plt.grid()
    plt.plot(duration_t.numpy())
    
    if len(duration_t) >= 100:
-      means = duration_t.unfold(0, 1000, 1).mean(1).view(-1)
-      means = torch.cat((torch.zero(99), means))
+      means = duration_t.unfold(0, 100, 1).mean(1).view(-1)
+      means = torch.cat((torch.zeros(99), means))
+
+      plt.plot(means.numpy())
       
-      plt.plot(means.numpy)
+      plt.legend(['Inst. Value', 'Mean Value'])
    
    plt.pause(0.001)
    
